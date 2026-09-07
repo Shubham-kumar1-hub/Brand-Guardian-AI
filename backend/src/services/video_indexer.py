@@ -65,7 +65,7 @@ class VideoIndexerServices:
         logger.info(f"Downloading Youtube Video : {url}")
         ydl_opts = {
             'format' : 'best',
-            'outtmpl' : output_path,
+            'outtmpl' : output_path,   # output template
             'quiet' : False,
             'no_warning' : False,
             'extractor_args' : {'youtube': {'player_client':['android','web']}},
