@@ -39,7 +39,7 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
     try:
         vi_service = VideoIndexerServices()
 
-        # Downloading the video from the URL
+        # Downloading the video from the URL  (using yt-dlp)
         if "youtube.com" in video_url or "youtu.be" in video_url:
             local_path = vi_service.download_youtube_video(video_url, output_path=local_filename)
         else:
@@ -105,3 +105,63 @@ def audit_content_node(state: VideoAuditState) -> Dict[str,Any]:
         index_name=os.getenv("AZURE_SEARCH_INDEX_NAME"),
         embedding_function=embeddings.embed_query
     )
+
+    # RAG Retrieval
+
+    ocr_text = state.get("ocr_text",[])
+    query_text = f"{transcript} {''.join(ocr_text)}"
+    docs = vector_store.similarity_search(query_text, k=3)   # retrieve top 3 pages from the document.
+    retrieved_rules = "\n\n".join([doc.page_content for doc in docs])
+
+    system_prompt = f""" 
+            You are a senior brand compliance auditor.
+            OFFICIAL REGULATORY RULES:
+            {retrieved_rules}
+            INSTRUCTIONS: 
+            1. Analyze the Transcript and the OCR text below.
+            2. Identify any violation of the rules.
+            3. Return strictly JSON in the following format
+                {{
+            "compliance_results": [
+            {{
+                "category": "Claim Validation",
+                "severity": "CRITICAL",
+                "description": "Explanation of the violation..."
+            }}
+        ],
+        "status": "FAIL",
+        "final_report": "Summary of findings..."
+        }}
+
+        If no violations are found, set "status" to "PASS" and "compliance_results" to [].
+        """
+
+    user_message = f"""
+                VIDEO_METADATA : {state.get("video_metadata",{})},
+                TRANSCRIPT : {transcript}
+                ON-SCREEN TEXT (OCR) : {ocr_text}
+                """
+
+    try:
+        response = llm.invoke([
+            SystemMessage(content=system_prompt),
+            HumanMessage(content=user_message)
+        ])
+        content=response.content
+        if "```" in content:
+            content = re.search(r"```(?:json)?(.*?)```",content,re.DOTALL).group(1)
+        audit_data = json.loads(content.strip())
+        return {
+            "compliance_results" : audit_data.get("compliance_results", []),
+            "final_status"  : audit_data.get("status", "FAIL"),
+            "final_report" : audit_data.get("final_report", "No report generated")
+        }
+
+    except Exception as e:
+        logger.error(f"System error in Auditor Node : {str(e)}")
+        # Logging the raw responses
+        logger.error(f"Raw LLM response : {response.content if 'response' in locals() else 'None'}")
+        return {
+            "errors" : [str(e)],
+            "final_status" : "FAIL"
+        }
