@@ -4,7 +4,7 @@ import logging
 import re
 from typing import Any, Dict, List
 
-from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings
+from langchain_openai import AzureChatOpenAI, AzureOpenAIEmbeddings, OpenAIEmbeddings
 from langchain_community.vectorstores import AzureSearch
 from langchain_core.prompts import ChatPromptTemplate
 from langchain_core.messages import HumanMessage, SystemMessage, AIMessage
@@ -67,4 +67,41 @@ def index_video_node(state: VideoAuditState) -> Dict[str, Any]:
             "final_status" : "FAIL",
             "transcript" : "",
             "ocr_text" : []
+
         }
+
+
+# Node 2 : COMPLIANCE CHECKER
+# Responsible for checking the compliance of the video content against the rules in the knowledge base
+
+def audit_content_node(state: VideoAuditState) -> Dict[str,Any]:
+    '''
+    Performs RAG based compliance check on the video content
+    '''
+    logger.info("----[Node: Auditor] quering Knowledge base & LLM")
+    transcript = state.get("transcript","")
+    if not transcript:
+        logger.warning("No Transcript Found. Skipping Compliance Check")
+        return {
+            "final_status" : "FAIL",
+            "final_report" : "No Transcript Found. Compliance Check Skipped",
+        }
+    
+    # initializing the Azure OpenAI LLM and Embeddings
+    llm = AzureChatOpenAI(
+        azure_deployment=os.getenv("AZURE_OPENAI_CHAT_DEPLOYMENT"),
+        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+        temperature=0.0
+    )
+    
+    embeddings = AzureOpenAIEmbeddings(
+        azure_deployment="text-embedding-3-small",
+        openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
+    )
+    
+    vector_store = AzureSearch(
+        azure_search_endpoint=os.getenv("AZURE_SEARCH_ENDPOINT"),
+        azure_search_key=os.getenv("AZURE_SEARCH_API_KEY"),
+        index_name=os.getenv("AZURE_SEARCH_INDEX_NAME"),
+        embedding_function=embeddings.embed_query
+    )
