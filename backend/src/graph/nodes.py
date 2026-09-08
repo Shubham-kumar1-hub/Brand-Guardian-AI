@@ -95,7 +95,8 @@ def audit_content_node(state: VideoAuditState) -> Dict[str,Any]:
     )
     
     embeddings = AzureOpenAIEmbeddings(
-        azure_deployment="text-embedding-3-small",
+        azure_endpoint=os.getenv("AZURE_OPENAI_EMBEDDING_ENDPOINT"),
+        azure_deployment=os.getenv("AZURE_OPENAI_EMBEDDING_DEPLOYMENT"),
         openai_api_version=os.getenv("AZURE_OPENAI_API_VERSION"),
     )
     
