@@ -28,7 +28,6 @@ The backend workflow is orchestrated using **LangGraph**, while **FastAPI** prov
 - ⚡ **FastAPI Backend** — Exposes the auditing pipeline through a REST API.
 - 🖥️ **Streamlit Dashboard** — Provides an easy-to-use interface for submitting videos and viewing audit results.
 - 📊 **Observability** — Uses Azure Monitor/OpenTelemetry and LangSmith for application and LLM tracing.
-- 🗃️ **Persistent Infrastructure** — Uses PostgreSQL and Redis for application data, caching, and state management.
 
 ---
 
@@ -146,9 +145,6 @@ The backend workflow is orchestrated using **LangGraph**, while **FastAPI** prov
 
 | Technology | Purpose |
 |---|---|
-| **PostgreSQL** | Relational data storage |
-| **SQLAlchemy** | Database ORM |
-| **Redis** | Caching and state management |
 | **uv** | Python package and project management |
 
 ### Observability
