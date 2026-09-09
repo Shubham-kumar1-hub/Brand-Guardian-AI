@@ -26,7 +26,7 @@ logger = logging.getLogger("api-server")
 # Creating the FastAPI app
 app = FastAPI(
     title = "Brand Guardian AI API",
-    description = "API for uditing video content against the brand compliance rules",
+    description = "API for aditing video content against the brand compliance rules",
     version = "1.0.0"
 )
 
@@ -67,7 +67,7 @@ async def audit_video(request : AuditRequest):
     '''
 
     session_id = str(uuid.uuid4())
-    video_id_short =f"vid{session_id[:8]}"
+    video_id_short =f"vid_{session_id[:8]}"
     logger.info(f"Received Audit request : {request.video_url} (Session : {session_id})")
     # Graphs Inputs
     initial_inputs = {
