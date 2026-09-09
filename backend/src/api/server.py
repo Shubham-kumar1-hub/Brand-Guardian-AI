@@ -53,7 +53,7 @@ class AuditResponse(BaseModel):
     '''
 
     session_id : str
-    video_url : str
+    video_id : str
     status : str
     final_report : str
     compliance_results : List[ComplianceIssue]
