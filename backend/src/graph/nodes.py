@@ -94,7 +94,7 @@ def audit_content_node(state: VideoAuditState) -> Dict[str,Any]:
         azure_endpoint=os.getenv("AZURE_OPENAI_ENDPOINT"), 
         api_version=os.getenv("AZURE_OPENAI_API_VERSION"), 
         api_key=os.getenv("AZURE_OPENAI_API_KEY"),
-        temperature=1.0,
+        temperature=0.1,
     ) 
      
     embeddings = AzureOpenAIEmbeddings( 
